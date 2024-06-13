@@ -33,7 +33,7 @@ class BaseEntity(ABC):
             True if other is an instance of BaseEntity and if it's id_
             property has the same value.
         """
-        if not isinstance(other, BaseEntity):
+        if not type(other) is type(self):
             return False
         return self._id == other._id
 
