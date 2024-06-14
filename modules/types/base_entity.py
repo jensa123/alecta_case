@@ -12,16 +12,31 @@ class BaseEntity(ABC):
     This is the lowest level common base class for all entity types.
     A class deriving from this ABC should call super().__init__(id_)
     in its own __init__ method.
+
+    The attribute named id_ is mapped to the automatically generated
+    primary key in the database. A value of 0 (zero) should be used
+    to represent an in-memory object which has not yet been persisted
+    to the database.
+
+    Attributes:
+        id_: An identifier for the entity, unique among the set of entities of the same type.
     """
 
     @abstractmethod
     def __init__(self, id_: int) -> None:
-        self._id = id_
+        self.id_ = id_
 
     @property
     def id_(self) -> int:
         """The id of the entity."""
         return self._id
+
+    @id_.setter
+    def id_(self, value: int) -> None:
+        if not isinstance(value, int):
+            raise TypeError
+        if value < 0:
+            raise ValueError(f"id_ must be >= 0, argument is {value}.")
 
     def __eq__(self, other: object) -> bool:
         """Value comparison of BaseEntity objects.

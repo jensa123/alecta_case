@@ -11,6 +11,7 @@ from datetime import date
 from modules.helpers.common import is_valid_string
 from modules.helpers.dateutilities import last_business_day
 from modules.types.position import Position
+from modules.types.key_figures import KeyFigureRefType
 
 
 def get_input_date(argv: list[str]) -> date:
@@ -30,3 +31,4 @@ def get_input_date(argv: list[str]) -> date:
 
 if __name__ == "__main__":
     print(f"Running risk report for date {get_input_date(argv)}")
+    print(KeyFigureRefType.INSTRUMENT.name)
