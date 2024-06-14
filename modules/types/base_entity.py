@@ -37,6 +37,7 @@ class BaseEntity(ABC):
             raise TypeError
         if value < 0:
             raise ValueError(f"id_ must be >= 0, argument is {value}.")
+        self._id = value
 
     def __eq__(self, other: object) -> bool:
         """Value comparison of BaseEntity objects.

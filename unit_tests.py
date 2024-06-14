@@ -6,6 +6,7 @@ from datetime import date
 from modules.types.position import Position
 from modules.types.instruments import Equity
 from modules.types.portfolio import Portfolio
+from modules.api.db.dbaccessor import DbAccesssor
 
 
 class DateUtilitiesTestCase(unittest.TestCase):
@@ -46,6 +47,14 @@ class PositionTestCase(unittest.TestCase):
         pos_2 = Position.create(1, portfolio, instrument, position_date, 12)
         pos_2_mv = pos_2.market_value(78.0)
         self.assertEqual(pos_2_mv, 936)
+
+
+class DbAccessorTestCase(unittest.TestCase):
+    """Contains unit tests for the DbAccessor class."""
+
+    def test_create_connect_close(self):
+        db_accessor = DbAccesssor("./db/alecta_case_db.db")
+        db_accessor.connect()
 
 
 if __name__ == "__main__":
