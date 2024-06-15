@@ -53,6 +53,9 @@ class BaseEntity(ABC):
             return False
         return self._id == other._id
 
+    def __str__(self) -> str:
+        return f"Class: {self.__class__.__name__}, id_: {self.id_}"
+
 
 class BaseEntityNamed(BaseEntity):
     """Abstract base class (ABC) representing an entity with an id and a name."""
@@ -72,3 +75,6 @@ class BaseEntityNamed(BaseEntity):
         if not is_valid_string(value):
             raise ValueError
         self.__name = value
+
+    def __str__(self) -> str:
+        return super().__str__() + f", name: {self.name}"

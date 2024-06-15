@@ -149,7 +149,7 @@ class SQLiteDbAccesssor(DbAccessor):
                 raise ValueError(
                     f"Insert statements inserting more than one row is not supported. Number of affected rows: {cnt}"
                 )
-            # self.connection.commit()
+            self.connection.commit()
             return cur.lastrowid
 
 

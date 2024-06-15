@@ -1,5 +1,7 @@
 """Definitions of types used to represent key figures."""
 
+__all__: list["str"] = ["KeyFigureRefType", "KeyFigure", "KeyFigureValue"]
+
 from .base_entity import BaseEntity, BaseEntityNamed
 from enum import Enum
 from datetime import date

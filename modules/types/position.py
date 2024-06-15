@@ -25,6 +25,7 @@ class Position(BaseEntity):
         instrument: Instrument,
         position_date: date,
         quantity: float | int,
+        /,
     ):
         pos = cls(id_)
         pos.portfolio = portfolio
