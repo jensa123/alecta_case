@@ -23,10 +23,17 @@ class RiskDbAccessor:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self._db_accessor.close()
 
-    def _generic_select(self, columns: list[str], table: str, /) -> list[Any]:
-        return self._db_accessor.execute_select_query(
-            f"select {','.join(columns)} from {table};"
-        )
+    def _generic_select(
+        self, columns: list[str], table: str, /, *, id_: int | None = None
+    ) -> list[Any]:
+        query = f"select {','.join(columns)} from {table}"
+        parameters: tuple[Any, ...] = ()
+        if id_ is not None:
+            query = query + f" where id = ?;"
+            parameters = (id_,)
+        else:
+            query = query + ";"
+        return self._db_accessor.execute_select_query(query, parameters)
 
     def _generic_delete(self, id_: int, table: str, /) -> int:
         return self._db_accessor.execute_query(
@@ -67,6 +74,24 @@ class RiskDbAccessor:
         """
         instruments_: list[Instrument] = [
             i for i in self.get_instruments() if i.id_ == id_
+        ]
+        count = len(instruments_)
+        if count == 0:
+            return None
+        else:
+            return instruments_[0]
+
+    def get_instrument_from_name(self, name: str) -> Instrument | None:
+        """Gets the instrument with the provided name.
+
+        Args:
+            name: The name of the instrument.
+
+        Returns:
+            The instrument if found, otherwise None.
+        """
+        instruments_: list[Instrument] = [
+            i for i in self.get_instruments() if i.name == name
         ]
         count = len(instruments_)
         if count == 0:
@@ -171,15 +196,31 @@ class RiskDbAccessor:
                 )
         return result
 
+    def get_position(self, id_: int) -> Position | None:
+        positions: Position = [pos for pos in self.get_positions() if pos.id_ == id_]
+        count: int = len(positions)
+        if count == 0:
+            return None
+        else:
+            return positions[0]
+
     def get_key_figures(self) -> list[KeyFigure]:
-        key_figures_ = self._generic_select(["id", "name"], "KeyFigure")
+        key_figures_: list[Any] = self._generic_select(["id", "name"], "KeyFigure")
         return [KeyFigure(row[0], row[1]) for row in key_figures_]
+
+    def get_key_figure(self, id_: int) -> KeyFigure | None:
+        suspects = [kf for kf in self.get_key_figures() if kf.id_ == id_]
+        count = len(suspects)
+        if count == 0:
+            return None
+        else:
+            return suspects[0]
 
     def get_key_figure_from_name(self, name: str) -> KeyFigure | None:
         key_figures_: list[KeyFigure] = [
             i for i in self.get_key_figures() if i.name == name
         ]
-        count = len(key_figures_)
+        count: int = len(key_figures_)
         if count == 0:
             return None
         else:
@@ -191,7 +232,9 @@ class RiskDbAccessor:
         Returns:
             A list of all key figure ref types in the database.
         """
-        key_figure_ref_types = self._generic_select(["id", "name"], "KeyFigureRefType")
+        key_figure_ref_types: list[Any] = self._generic_select(
+            ["id", "name"], "KeyFigureRefType"
+        )
         return [KeyFigureRefType(row[0], row[1]) for row in key_figure_ref_types]
 
     def get_key_figure_ref_type_from_name(self, name: str) -> KeyFigureRefType | None:
@@ -210,7 +253,21 @@ class RiskDbAccessor:
         if count == 0:
             return None
         else:
-            return key_figure_ref_types[0]
+            return KeyFigureRefType(
+                key_figure_ref_types[0][0], key_figure_ref_types[0][1]
+            )
+
+    def get_key_figure_ref_type_from_id(self, id_: int) -> KeyFigureRefType | None:
+        key_figure_ref_types: list[KeyFigureRefType] = self._generic_select(
+            ["id", "name"], "KeyFigureRefType", id_=id_
+        )
+        count = len(key_figure_ref_types)
+        if count == 0:
+            return None
+        else:
+            return KeyFigureRefType(
+                key_figure_ref_types[0][0], key_figure_ref_types[0][1]
+            )
 
     def get_key_figure_values(self) -> list[KeyFigureValue]:
         """Gets all key figure values in the database.
@@ -218,17 +275,34 @@ class RiskDbAccessor:
         Returns:
             A list of KeyFigureValue instances.
         """
-        key_figure_values = self._generic_select(
+        key_figure_values: list[Any] = self._generic_select(
             ["id", "date", "value", "ref_type", "ref_entity_id", "key_figure_id"],
             "KeyFigureValue",
         )
-        return [
-            KeyFigureValue(row[0], row[1], row[2], row[3], row[4], row[5])
-            for row in key_figure_values
-        ]
+        result: list[KeyFigureValue] = []
+        for kfv in key_figure_values:
+            id_: int = kfv[0]
+            date_: date = date.fromisoformat(kfv[1])
+            value: float | int = kfv[2]
+            ref_type: KeyFigureRefType = self.get_key_figure_ref_type_from_id(kfv[3])
+            ref_entity: BaseEntity
+            match ref_type.name:
+                case "Instrument":
+                    ref_entity = self.get_instrument(kfv[4])
+                case "Position":
+                    ref_entity = self.get_position(kfv[4])
+                case "Portfolio":
+                    ref_entity = self.get_portfolio(kfv[4])
+                case _:
+                    raise RuntimeError
+            key_figure = self.get_key_figure(kfv[5])
+            result.append(
+                KeyFigureValue(id_, date_, value, ref_type, ref_entity, key_figure)
+            )
+        return result
 
     def insert_key_figure_value(self, key_figure_value: KeyFigureValue) -> None:
-        v = key_figure_value
+        v: KeyFigureValue = key_figure_value
 
         row_id: int | None = self._db_accessor.execute_insert_statement(
             "insert into KeyFigureValue (date, value"
@@ -256,9 +330,59 @@ class RiskDbAccessor:
         return self._db_accessor.execute_query("delete from KeyFigureValue;")
 
     def delete_key_figure_value(self, key_figure_value: KeyFigureValue) -> bool:
-        row_count = self._generic_delete(
+        row_count: int = self._generic_delete(
             key_figure_value.id_, key_figure_value.__class__.__name__
         )
         if row_count > 0:
             return True
         return False
+
+    def get_prices(
+        self,
+        *,
+        instrument: Instrument | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> list[Price]:
+        """Gets prices from the database.
+
+        This method can be called without arguments or optionally
+        with arguments. If any argument is provided it is used as
+        a filter.
+
+        Args:
+            instrument: The instrument to get prices for.
+            date_from: The earliest date to get prices for.
+            date_to: The latest date to get prices for.
+
+        Returns:
+            A list of Price objects.
+        """
+
+        all_prices: list[Any] = self._generic_select(
+            ["id", "instrument_id", "date", "price"], "Prices"
+        )
+
+        result: list[Price] = []
+        for price in all_prices:
+            include: bool = True
+            id_: int = price[0]
+            instrument_id = price[1]
+            date_: date = date.fromisoformat(price[2])
+            value: float = price[3]
+
+            if instrument is not None:
+                if instrument.id_ != instrument_id:
+                    include = False
+            if date_from is not None:
+                if date_ < date_from:
+                    include = False
+            if date_to is not None:
+                if date_ > date_to:
+                    include = False
+
+            if include:
+                result.append(
+                    Price(id_, self.get_instrument(instrument_id), date_, value)
+                )
+        return result

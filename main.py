@@ -37,60 +37,90 @@ if __name__ == "__main__":
 
     risk_db_accessor: RiskDbAccessor
     with RiskDbAccessor() as risk_db_accessor:
-        print(risk_db_accessor)
-        instruments_ = risk_db_accessor.get_instruments()
-        for i in instruments_:
-            print(i)
 
-        print("Get one instrument")
-        i = risk_db_accessor.get_instrument(2)
-        print(i)
+        # Calculate market values for a portfolio for a date range
+        portfolio_ = risk_db_accessor.get_portfolio_from_name("EQ_US")
+        date_from: date = date(2023, 12, 31)
+        date_to: date = date(2024, 5, 31)
+        ref_type = risk_db_accessor.get_key_figure_ref_type_from_name("Portfolio")
+        key_figure = risk_db_accessor.get_key_figure_from_name("Market value")
 
-        print("Get instrument types")
-        instrument_types = risk_db_accessor.get_instrument_types()
-        for inst_type in instrument_types:
-            print(inst_type)
+        vdate: date = date_from
+        while vdate <= date_to:
 
-        print("Get portfolios")
-        portfolios = risk_db_accessor.get_portfolios()
-        for p in portfolios:
-            print(p)
-        p = risk_db_accessor.get_portfolio(3)
-        print(p)
+            positions: list[Position] = risk_db_accessor.get_positions(vdate, portfolio)
 
-        print("Get positions")
-        positions = risk_db_accessor.get_positions(
-            position_date=date(2023, 12, 31),
-            portfolio=risk_db_accessor.get_portfolio_from_name("FI_SWE"),
-        )
-        for pos in positions:
-            print(pos)
+            vdate = vdate + 1
 
-        print("Get key figures")
-        key_figures_ = risk_db_accessor.get_key_figures()
-        for kf in key_figures_:
-            print(kf)
-        mv_kf = risk_db_accessor.get_key_figure_from_name("Market value")
-        print(mv_kf)
+        # print(risk_db_accessor)
+        # instruments_ = risk_db_accessor.get_instruments()
+        # for i in instruments_:
+        #     print(i)
 
-        print("Get key figure ref types")
-        key_figure_ref_types = risk_db_accessor.get_key_figure_ref_types()
-        for kfrt in key_figure_ref_types:
-            print(kfrt)
+        # print("Get one instrument")
+        # i = risk_db_accessor.get_instrument(2)
+        # print(i)
 
-        print("Delete all key figure values")
-        risk_db_accessor.delete_key_figure_values()
+        # print("Get instrument types")
+        # instrument_types = risk_db_accessor.get_instrument_types()
+        # for inst_type in instrument_types:
+        #     print(inst_type)
 
-        print("Insert a key figure value")
-        kfv = KeyFigureValue(
-            0,
-            date(2023, 12, 31),
-            55.0 * 100 + 3.0 * 100,
-            risk_db_accessor.get_key_figure_ref_type_from_name("Portfolio"),
-            risk_db_accessor.get_portfolio_from_name("EQ_US"),
-            risk_db_accessor.get_key_figure_from_name("Market value"),
-        )
-        risk_db_accessor.insert_key_figure_value(kfv)
+        # print("Get portfolios")
+        # portfolios = risk_db_accessor.get_portfolios()
+        # for p in portfolios:
+        #     print(p)
+        # p = risk_db_accessor.get_portfolio(3)
+        # print(p)
+
+        # print("Get positions")
+        # positions = risk_db_accessor.get_positions(
+        #     position_date=date(2023, 12, 31),
+        #     portfolio=risk_db_accessor.get_portfolio_from_name("FI_SWE"),
+        # )
+        # for pos in positions:
+        #     print(pos)
+
+        # print("Get key figures")
+        # key_figures_ = risk_db_accessor.get_key_figures()
+        # for kf in key_figures_:
+        #     print(kf)
+        # mv_kf = risk_db_accessor.get_key_figure_from_name("Market value")
+        # print(mv_kf)
+
+        # print("Get key figure ref types")
+        # key_figure_ref_types = risk_db_accessor.get_key_figure_ref_types()
+        # for kfrt in key_figure_ref_types:
+        #     print(kfrt)
+
+        # print("Get all prices")
+        # all_prices = risk_db_accessor.get_prices()
+
+        # print("Get prices for a particular instrument and date range")
+        # tesla_april_prices = risk_db_accessor.get_prices(
+        #     instrument=risk_db_accessor.get_instrument_from_name("Tesla"),
+        #     date_from=date(2024, 4, 1),
+        #     date_to=date(2024, 4, 30),
+        # )
+
+        # print("Get all key figure values")
+        # all_key_figure_values = risk_db_accessor.get_key_figure_values()
+        # for kfv in all_key_figure_values:
+        #     print(kfv)
+
+        # print("Delete all key figure values")
+        # risk_db_accessor.delete_key_figure_values()
+
+        # print("Insert a key figure value")
+        # kfv = KeyFigureValue(
+        #     0,
+        #     date(2023, 12, 31),
+        #     55.0 * 100 + 3.0 * 100,
+        #     risk_db_accessor.get_key_figure_ref_type_from_name("Portfolio"),
+        #     risk_db_accessor.get_portfolio_from_name("EQ_US"),
+        #     risk_db_accessor.get_key_figure_from_name("Market value"),
+        # )
+        # risk_db_accessor.insert_key_figure_value(kfv)
 
     # db_accessor: DbAccessor = db_accessor_factory(
     #     DbEngine.SQLITE, "./db/alecta_case_db.db"
