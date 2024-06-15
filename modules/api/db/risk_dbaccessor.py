@@ -185,7 +185,7 @@ class RiskDbAccessor:
                     include = False
 
             if portfolio is not None:
-                if not portfolio.id_ == id_:
+                if not portfolio.id_ == portfolio_.id_:
                     include = False
 
             if include:
@@ -253,9 +253,7 @@ class RiskDbAccessor:
         if count == 0:
             return None
         else:
-            return KeyFigureRefType(
-                key_figure_ref_types[0][0], key_figure_ref_types[0][1]
-            )
+            return key_figure_ref_types[0]
 
     def get_key_figure_ref_type_from_id(self, id_: int) -> KeyFigureRefType | None:
         key_figure_ref_types: list[KeyFigureRefType] = self._generic_select(
