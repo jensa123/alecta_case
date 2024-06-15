@@ -23,14 +23,16 @@ class Position(BaseEntity):
         id_: int,
         portfolio: Portfolio,
         instrument: Instrument,
-        position_date: date,
+        date_from: date,
+        date_to: date,
         quantity: float | int,
         /,
     ):
         pos = cls(id_)
         pos.portfolio = portfolio
         pos.instrument = instrument
-        pos.position_date = position_date
+        pos.date_from = date_from
+        pos.date_to = date_to
         pos.quantity = quantity
         return pos
 
@@ -68,16 +70,34 @@ class Position(BaseEntity):
         self._quantity = value
 
     @property
-    def position_date(self) -> date:
-        """The date of the position."""
-        return self._position_date
+    def date_from(self) -> date:
+        """The start date of the position."""
+        return self._date_from
 
-    @position_date.setter
-    def position_date(self, value: date) -> None:
+    @date_from.setter
+    def date_from(self, value: date) -> None:
         if not isinstance(value, date):
             raise TypeError
-        self._position_date = value
+        self._date_from = value
 
-    def market_value(self, price) -> float:
+    @property
+    def date_to(self) -> date:
+        """The end date of the position."""
+        return self._date_to
+
+    @date_to.setter
+    def date_to(self, value: date) -> None:
+        if not isinstance(value, date):
+            raise TypeError
+        self._date_to = value
+
+    def market_value(self, price: float) -> float:
         """Computes and returns the market value of the position."""
         return self.instrument.market_value(price, self.quantity)
+
+    def __str__(self) -> str:
+        return (
+            super().__str__()
+            + f", portfolio: ({self.portfolio}), instrument: ({self.instrument})"
+            f", date_from: {self.date_from}, date_to: {self.date_to}, quantity: {self.quantity}"
+        )

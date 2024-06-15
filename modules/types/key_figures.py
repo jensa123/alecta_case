@@ -7,12 +7,11 @@ from enum import Enum
 from datetime import date
 
 
-class KeyFigureRefType(Enum):
-    """Enumerates the different types of entities a key figure can represent."""
+class KeyFigureRefType(BaseEntityNamed):
+    """Represents the type of entity a key figure value is for."""
 
-    INSTRUMENT = 1
-    POSITION = 2
-    PORTFOLIO = 3
+    def __init__(self, id_: int, name: str) -> None:
+        super().__init__(id_, name)
 
 
 class KeyFigure(BaseEntityNamed):
@@ -36,15 +35,15 @@ class KeyFigureValue(BaseEntity):
         key_figure_date: date,
         value: float | int,
         key_figure_ref_type: KeyFigureRefType,
-        reference_entity_id: int,
-        key_figure_id: int,
+        reference_entity: BaseEntity,
+        key_figure: KeyFigure,
     ) -> None:
         super().__init__(id_)
         self.key_figure_date = key_figure_date
         self.value = value
         self.key_figure_ref_type = key_figure_ref_type
-        self.reference_entity_id = reference_entity_id
-        self.key_figure_id = key_figure_id
+        self.reference_entity = reference_entity
+        self.key_figure = key_figure
 
     @property
     def key_figure_date(self) -> date:
@@ -80,23 +79,23 @@ class KeyFigureValue(BaseEntity):
         self._key_figure_ref_type = value
 
     @property
-    def reference_entity_id(self) -> int:
-        """The id of the entity the key figure value is for."""
-        return self._reference_entity_id
+    def reference_entity(self) -> BaseEntity:
+        """The base entity the key figure value is for."""
+        return self._reference_entity
 
-    @reference_entity_id.setter
-    def reference_entity_id(self, value: int) -> None:
-        if not isinstance(value, int):
+    @reference_entity.setter
+    def reference_entity(self, value: BaseEntity) -> None:
+        if not isinstance(value, BaseEntity):
             raise TypeError
-        self._reference_entity_id = value
+        self._reference_entity = value
 
     @property
-    def key_figure_id(self) -> int:
-        """The id of the key figure the key figure value represents."""
-        return self._key_figure_id
+    def key_figure(self) -> KeyFigure:
+        """The the key figure the key figure value represents."""
+        return self._key_figure
 
-    @key_figure_id.setter
-    def key_figure_id(self, value: int) -> None:
-        if not isinstance(value, int):
+    @key_figure.setter
+    def key_figure(self, value: KeyFigure) -> None:
+        if not isinstance(value, KeyFigure):
             raise TypeError
-        self._key_figure_id = value
+        self._key_figure = value

@@ -57,11 +57,12 @@ class DbAccessor(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def execute_query(self, query: str, parameters: tuple[Any, ...] = ()) -> None:
-        """Executes a query against the database and does not return anything.
+    def execute_query(self, query: str, parameters: tuple[Any, ...] = ()) -> int:
+        """Executes a query against the database and returns the number of affected rows.
 
         This method should only be used if the goal is to simply execute a query
-        against the database and not care about any side effects.
+        against the database and not care about any side effects, other than knowing
+        the number of affected rows.
 
         Args:
             query: The SQL query to execute, using ? as placeholders for parameters.
@@ -134,10 +135,12 @@ class SQLiteDbAccesssor(DbAccessor):
             rows = cur.execute(query, parameters).fetchall()
             return rows
 
-    def execute_query(self, query: str, parameters: tuple[Any, ...] = ()) -> None:
+    def execute_query(self, query, parameters=()):
         with closing(self.connection.cursor()) as cur:
             cur.execute(query, parameters)
+            cnt = cur.rowcount
             self.connection.commit()
+            return cnt
 
     def execute_insert_statement(self, query, parameters=()):
         with closing(self.connection.cursor()) as cur:

@@ -58,6 +58,40 @@ if __name__ == "__main__":
         p = risk_db_accessor.get_portfolio(3)
         print(p)
 
+        print("Get positions")
+        positions = risk_db_accessor.get_positions(
+            position_date=date(2023, 12, 31),
+            portfolio=risk_db_accessor.get_portfolio_from_name("FI_SWE"),
+        )
+        for pos in positions:
+            print(pos)
+
+        print("Get key figures")
+        key_figures_ = risk_db_accessor.get_key_figures()
+        for kf in key_figures_:
+            print(kf)
+        mv_kf = risk_db_accessor.get_key_figure_from_name("Market value")
+        print(mv_kf)
+
+        print("Get key figure ref types")
+        key_figure_ref_types = risk_db_accessor.get_key_figure_ref_types()
+        for kfrt in key_figure_ref_types:
+            print(kfrt)
+
+        print("Delete all key figure values")
+        risk_db_accessor.delete_key_figure_values()
+
+        print("Insert a key figure value")
+        kfv = KeyFigureValue(
+            0,
+            date(2023, 12, 31),
+            55.0 * 100 + 3.0 * 100,
+            risk_db_accessor.get_key_figure_ref_type_from_name("Portfolio"),
+            risk_db_accessor.get_portfolio_from_name("EQ_US"),
+            risk_db_accessor.get_key_figure_from_name("Market value"),
+        )
+        risk_db_accessor.insert_key_figure_value(kfv)
+
     # db_accessor: DbAccessor = db_accessor_factory(
     #     DbEngine.SQLITE, "./db/alecta_case_db.db"
     # )
