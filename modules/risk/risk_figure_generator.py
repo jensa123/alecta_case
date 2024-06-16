@@ -5,6 +5,8 @@ __all__: list[str] = ["RiskFigureGenerator"]
 from ..api.db import RiskDbAccessor
 from ..types import *
 from datetime import date, timedelta
+import statistics
+import math
 
 
 class RiskFigureGenerator:
@@ -57,6 +59,10 @@ class RiskFigureGenerator:
             portfolio_name: The name of the portfolio.
             date_from: The first date to calculate and store market value for.
             date_to: The last date to calculate and store market value for.
+
+        Returns:
+            A list of KeyFigureValue objects representing the key figure values
+            which were either inserted or updated in the database.
         """
 
         result: list[KeyFigureValue] = []
@@ -101,5 +107,48 @@ class RiskFigureGenerator:
         date_: date = date_from
         while date_ <= date_to:
             result.append(self.return_1D_for_portfolio_and_date(portfolio_name, date_))
+            date_ = date_ + timedelta(days=1)
+        return result
+
+    def volatility_3M_ann_for_portfolio_and_date(
+        self, portfolio_name: str, date_: date
+    ) -> KeyFigureValue:
+        date_start: date = date_ - timedelta(days=89)
+        returns: list[KeyFigureValue] = self.return_1D_for_portfolio_and_date_range(
+            portfolio_name, date_start, date_
+        )
+        vol = statistics.stdev([math.log(1 + k.value) for k in returns])
+        vol = vol * math.sqrt(365)  # Annualize
+
+        db: RiskDbAccessor
+        with self._risk_db_accessor as db:
+            portfolio_ = db.get_portfolio_from_name(portfolio_name)
+            ref_type = db.get_key_figure_ref_type_from_name("Portfolio")
+            key_figure = db.get_key_figure_from_name("Volatility (3M, ann.)")
+            key_figure_value: KeyFigureValue = KeyFigureValue(
+                0, date_, vol, ref_type, portfolio_, key_figure
+            )
+            db.insert_or_update_key_figure(key_figure_value)
+            return key_figure_value
+
+    def return_1D_cumulative_series(
+        self, portfolio_name: str, date_from: date, date_to: date
+    ) -> list[tuple[date, float]]:
+
+        returns: list[KeyFigureValue] = self.return_1D_for_portfolio_and_date_range(
+            portfolio_name, date_from, date_to
+        )
+
+        result: list[tuple[date, float]] = []
+        date_: date = date_from
+        cumulative_return: float = 0
+        while date_ <= date_to:
+            key_figure_value: KeyFigureValue = next(
+                filter(lambda k: k.key_figure_date == date_, returns)
+            )
+            cumulative_return = (1 + cumulative_return) * (
+                1 + key_figure_value.value
+            ) - 1.0
+            result.append((date_, cumulative_return))
             date_ = date_ + timedelta(days=1)
         return result

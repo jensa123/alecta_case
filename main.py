@@ -13,7 +13,10 @@ from modules.helpers.dateutilities import last_business_day
 from modules.types.position import Position
 from modules.types.key_figures import KeyFigureRefType
 from modules.api.db import db_accessor_factory, DbEngine, DbAccessor, RiskDbAccessor
-from modules.risk.risk_figure_generator import RiskFigureGenerator
+from modules.risk import RiskFigureGenerator
+from modules.risk import RiskReportSettings, RiskReport
+from typing import Any
+import json
 
 
 def get_input_date(argv: list[str]) -> date:
@@ -33,8 +36,16 @@ def get_input_date(argv: list[str]) -> date:
 
 if __name__ == "__main__":
 
-    print(f"Running risk report for date {get_input_date(argv)}")
-    # -----------------------------------------------------------
+    risk_report: RiskReport = RiskReport(
+        RiskReportSettings(
+            "EQ_SWE",
+            date(2024, 1, 1),
+            date(2024, 5, 31),
+            ["Market value", "Return (1D)", "Volatility (3M, ann.)"],
+        )
+    )
+    output: dict[str, Any] = risk_report.generate()
+    print(json.dumps(output, indent=4))
 
     # risk_db_accessor: RiskDbAccessor
     # with RiskDbAccessor() as risk_db_accessor:
@@ -46,13 +57,14 @@ if __name__ == "__main__":
     #         KeyFigureValue(4, date_, 3333, ref_type, portfolio_, key_figure)
     #     )
 
-    g = RiskFigureGenerator()
+    # g = RiskFigureGenerator()
     # g.market_value_for_portfolio_and_date_range(
     #     "EQ_US", date(2023, 12, 31), date(2024, 5, 31)
     # )
-    g.return_1D_for_portfolio_and_date_range(
-        "EQ_US", date(2024, 1, 1), date(2024, 5, 31)
-    )
+    # g.return_1D_for_portfolio_and_date_range(
+    #     "EQ_US", date(2024, 1, 1), date(2024, 5, 31)
+    # )
+    # g.volatility_3M_ann_for_portfolio_and_date("EQ_US", date(2024, 5, 31))
 
     # risk_db_accessor: RiskDbAccessor
     # with RiskDbAccessor() as risk_db_accessor:
@@ -165,6 +177,3 @@ if __name__ == "__main__":
     #     elif inst_type == 2:
     #         bond = Bond(row[0], row[1])
     #     print(row)
-
-    # ------------------------------------
-    print("Risk report program finished.")
