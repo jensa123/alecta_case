@@ -319,6 +319,39 @@ class RiskDbAccessor:
 
         v.id_ = row_id
 
+    def update_key_figure_value(self, key_figure_value: KeyFigureValue) -> int:
+        v: KeyFigureValue = key_figure_value
+
+        row_count: int = self._db_accessor.execute_query(
+            f"update {KeyFigureValue.__name__} set value = ?2 where id = ?1;",
+            (v.id_, v.value),
+        )
+        return row_count
+
+    def insert_or_update_key_figure(
+        self, key_figure_value: KeyFigureValue
+    ) -> int | None:
+        v: KeyFigureValue = key_figure_value
+
+        existing: list[Any] = self._db_accessor.execute_select_query(
+            "select id, date, value, ref_type, ref_entity_id, key_figure_id "
+            f"from {KeyFigureValue.__name__} where date = ?1 "
+            "and ref_type = ?2 and ref_entity_id = ?3 and key_figure_id = ?4;",
+            (
+                v.key_figure_date.isoformat(),
+                v.key_figure_ref_type.id_,
+                v.reference_entity.id_,
+                v.key_figure.id_,
+            ),
+        )
+
+        if len(existing) > 0:
+            v.id_ = existing[0][0]
+            return self.update_key_figure_value(v)
+        else:
+            self.insert_key_figure_value(v)
+            return None
+
     def delete_key_figure_values(self) -> int:
         """Deletes all key figure values in the database.
 

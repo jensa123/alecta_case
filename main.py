@@ -36,9 +36,22 @@ if __name__ == "__main__":
     print(f"Running risk report for date {get_input_date(argv)}")
     # -----------------------------------------------------------
 
+    # risk_db_accessor: RiskDbAccessor
+    # with RiskDbAccessor() as risk_db_accessor:
+    #     portfolio_ = risk_db_accessor.get_portfolio_from_name("EQ_US")
+    #     ref_type = risk_db_accessor.get_key_figure_ref_type_from_name("Portfolio")
+    #     key_figure = risk_db_accessor.get_key_figure_from_name("Market value")
+    #     date_: date = date(2024, 1, 1)
+    #     risk_db_accessor.insert_or_update_key_figure(
+    #         KeyFigureValue(4, date_, 3333, ref_type, portfolio_, key_figure)
+    #     )
+
     g = RiskFigureGenerator()
-    g.market_value_for_portfolio_and_date_range(
-        "EQ_SWE", date(2024, 5, 1), date(2024, 5, 31)
+    # g.market_value_for_portfolio_and_date_range(
+    #     "EQ_US", date(2023, 12, 31), date(2024, 5, 31)
+    # )
+    g.return_1D_for_portfolio_and_date_range(
+        "EQ_US", date(2024, 1, 1), date(2024, 5, 31)
     )
 
     # risk_db_accessor: RiskDbAccessor

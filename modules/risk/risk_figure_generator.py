@@ -1,18 +1,32 @@
 """Contains types used for generating figures used by the risk report."""
 
+__all__: list[str] = ["RiskFigureGenerator"]
+
 from ..api.db import RiskDbAccessor
 from ..types import *
 from datetime import date, timedelta
 
 
 class RiskFigureGenerator:
+    """Class used for calculating and persisting risk figures consumed by the risk report."""
 
     def __init__(self) -> None:
         self._risk_db_accessor = RiskDbAccessor()
 
     def market_value_for_portfolio_and_date(
         self, portfolio_name: str, date_: date
-    ) -> None:
+    ) -> KeyFigureValue:
+        """Calculates and stores the market value for a given portfolio and date.
+
+        Args:
+            portfolio_name: The name of the portfolio.
+            date_: The date to calculate and store market value for.
+
+        Returns:
+            A KeyFigureValue object representing the key figure value
+            which was either inserted or updated in the database.
+        """
+
         db: RiskDbAccessor
         with self._risk_db_accessor as db:
             portfolio_ = db.get_portfolio_from_name(portfolio_name)
@@ -28,14 +42,64 @@ class RiskFigureGenerator:
                 )[0]
                 total_mv += pos.market_value(instrument_price.price)
 
-            db.insert_key_figure_value(
-                KeyFigureValue(0, date_, total_mv, ref_type, portfolio_, key_figure)
+            key_figure_value: KeyFigureValue = KeyFigureValue(
+                0, date_, total_mv, ref_type, portfolio_, key_figure
             )
+            db.insert_or_update_key_figure(key_figure_value)
+            return key_figure_value
 
     def market_value_for_portfolio_and_date_range(
         self, portfolio_name: str, date_from: date, date_to: date
-    ):
+    ) -> list[KeyFigureValue]:
+        """Calculates and stores the market value for a given portfolio and date range.
+
+        Args:
+            portfolio_name: The name of the portfolio.
+            date_from: The first date to calculate and store market value for.
+            date_to: The last date to calculate and store market value for.
+        """
+
+        result: list[KeyFigureValue] = []
         date_: date = date_from
         while date_ <= date_to:
-            self.market_value_for_portfolio_and_date(portfolio_name, date_)
+            result.append(
+                self.market_value_for_portfolio_and_date(portfolio_name, date_)
+            )
             date_ = date_ + timedelta(days=1)
+        return result
+
+    def return_1D_for_portfolio_and_date(
+        self, portfolio_name: str, date_: date
+    ) -> KeyFigureValue:
+        prev_date: date = date_ - timedelta(days=1)
+        market_values: list[KeyFigureValue] = (
+            self.market_value_for_portfolio_and_date_range(
+                portfolio_name, prev_date, date_
+            )
+        )
+
+        return_1D: float = market_values[1].value / market_values[0].value - 1.0
+
+        db: RiskDbAccessor
+        with self._risk_db_accessor as db:
+            key_figure = db.get_key_figure_from_name("Return (1D)")
+            key_figure_value: KeyFigureValue = KeyFigureValue(
+                0,
+                date_,
+                return_1D,
+                market_values[0].key_figure_ref_type,
+                market_values[0].reference_entity,
+                key_figure,
+            )
+            db.insert_or_update_key_figure(key_figure_value)
+            return key_figure_value
+
+    def return_1D_for_portfolio_and_date_range(
+        self, portfolio_name: str, date_from: date, date_to: date
+    ) -> list[KeyFigureValue]:
+        result: list[KeyFigureValue] = []
+        date_: date = date_from
+        while date_ <= date_to:
+            result.append(self.return_1D_for_portfolio_and_date(portfolio_name, date_))
+            date_ = date_ + timedelta(days=1)
+        return result
