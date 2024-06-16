@@ -72,6 +72,25 @@ The unit tests can be run as follows:
 This case implementation uses [Google's Python Style Guide](https://google.github.io/styleguide/pyguide.html).
 In particular the docstring style uses Google's style guide.
 
+The source code uses type hints. This has several benefits:
+
+- It makes it more obvious to the reader of the code what type of object a variable refers to.
+- It helps language servers running in IDEs provide more accurate intellisense.
+- One can use third-party static type checkers to perform a compile-time check of the type compatabilities.
+
+For example, defining a variable referring to a list which is only thought to include objects of type float,
+without type hints one would simply do:
+
+```python
+my_list = [3.14, 2.71]
+```
+
+With type hints,
+
+```python
+my_list: list[float] = [3.14, 2.71]
+```
+
 ## Structure
 The program has the following file tree.
 
@@ -120,7 +139,7 @@ Instances of the class **RiskDbAccessor** has an attribute referencing an object
 specific to the risk report database. It therefore also makes heavy use of the model classes
 which can be found under **./modules/types**.
 
-#### The helpers pacakge
+#### The helpers package
 Contains some helpful generic functionality.
 
 #### The risk package
@@ -180,7 +199,10 @@ The "Return (1D)" figure is the one-day portfolio return (for the last date of t
 
 $$ r(t) := \text{Return}_{1\text{Day}}(t) := \frac{MV(t)}{MV(t-1)} - 1, $$
 
-where $$ MV(t) := \sum_{i=1}^{n} \text{Position}_{i}(t). $$
+where
+
+$$ MV(t) := \sum_{i=1}^{n} \text{Position}_{i}(t).$$
+
 That is, a summation of the individual market values of the positions in the portfolio.
 
 **N.B.** For this case, we are simplifying a lot and there are no cashflows. In the presence of cashflows,
